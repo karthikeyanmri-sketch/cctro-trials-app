@@ -1,4 +1,7 @@
-import React, { useMemo, useState } from "react";
+import TRIALS_RAW from "./data/cctro_trials_flat.json";
+import { DISEASE_SITES } from "./data/disease_sites";
+import { matchesTrial, groupBy, safe, normalizeTrials } from "./lib/trials";
+import React, { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -13,7 +16,19 @@ import {
   Calendar,
   Tag,
 } from "lucide-react";
+// Premium UI helpers
+const DST_STYLES = {
+  GU:   { label: "Genitourinary",   banner: "from-emerald-500 to-teal-500",   chip: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  TOC:  { label: "Thoracic",        banner: "from-sky-500 to-indigo-500",    chip: "bg-sky-50 text-sky-700 border-sky-200" },
+  HN:   { label: "Head & Neck",     banner: "from-fuchsia-500 to-pink-500",  chip: "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200" },
+  NEURO:{ label: "Neuro/Brain",     banner: "from-violet-500 to-purple-500", chip: "bg-violet-50 text-violet-700 border-violet-200" },
+  GI:   { label: "GI",              banner: "from-amber-500 to-orange-500",  chip: "bg-amber-50 text-amber-700 border-amber-200" },
+  BREAST:{label:"Breast",           banner: "from-rose-500 to-red-500",      chip: "bg-rose-50 text-rose-700 border-rose-200" },
+};
 
+function dstStyle(dst) {
+  return DST_STYLES[dst] || { label: dst || "DST", banner: "from-slate-600 to-slate-800", chip: "bg-slate-50 text-slate-700 border-slate-200" };
+}
 // If you're using shadcn/ui in your project, you can swap these for shadcn components.
 const Card = ({ children, className = "" }) => (
   <div
@@ -66,12 +81,6 @@ const Badge = ({ children, className = "" }) => (
  * Replace SAMPLE_TRIALS with your live data source later.
  */
 
-const DISEASE_SITES = [
-  { id: "GU", label: "Genitourinary (GU)" },
-  { id: "TOC", label: "Thoracic (TOC)" },
-  { id: "HN", label: "Head & Neck" },
-  { id: "NB", label: "Neuro/Brain" },
-];
 
 // Trial status options used across DSTs.
 const STATUS = [
@@ -445,225 +454,243 @@ const SAMPLE_TRIALS = [
   // TOC (Thoracic)
   // =====================
   // NSCLC
+  
   {
-    id: "EDGE-LUNG",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 1st line",
+    indicationGroup: "1st Line Metastatic",
     indication: "No driver mutation",
+    id: "EDGE-LUNG",
+    nct: "NCT05676931",
     title:
-      "Phase II platform evaluating immunotherapy-based combinations in advanced NSCLC",
+      "A Phase II, Open-label, Platform Study, to Evaluate Immunotherapy-based Combinations in Participants With Advanced Non-Small Cell Lung Cance",
     protocol: "EDGE-LUNG",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT05676931",
   },
   {
-    id: "BH-30643-01 (SOLARA)",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 1st line",
+    indicationGroup: "1st Line Metastatic",
     indication: "EGFR and/or HER2",
+    id: "BH-30643-01",
+    nct: "NCT06706076",
     title:
-      "First-in-human BH-30643 in locally advanced/metastatic NSCLC with EGFR and/or HER2 mutations",
+      "A Phase 1/2 Open-Label, Multicenter, First-in-Human Study of the Safety, Tolerability, Pharmacokinetics, and Antitumor Activity of BH-30643 in Adult Subjects with Locally Advanced or Metastatic NSCLC Harboring EGFR  and/or HER2 Mutations (SOLARA)",
     protocol: "BH-30643-01",
     status: "Suspended",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT06706076",
   },
   {
-    id: "RMC-LUNG-101",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 1st line",
+    indicationGroup: "1st Line Metastatic",
     indication: "RAS mutation",
+    id: "RMC-LUNG-101",
+    nct: "NCT06162221",
     title:
-      "Platform study of RAS(ON) inhibitor combinations in RAS-mutated NSCLC",
+      "A Platform Study of RAS(ON) Inhibitor Combinations in Patients with RAS-Mutated Non-Small Cell Lung Cancer (NSCLC).",
     protocol: "RMC-LUNG-101",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT06162221",
   },
   {
-    id: "D702BC00001 (ARETMIDE-Lung-02)",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 1st line",
+    indicationGroup: "1st Line Metastatic",
     indication: "PD-L1 (TC ≥ 1%)",
+    id: "D702BC00001",
+    nct: "NCT06692738",
     title:
-      "Rilvegostomig + platinum chemotherapy for 1L metastatic squamous NSCLC",
+      "A Phase III, Randomized, Double-blind, Multicenter, Global Study of Rilvegostomig in Combination with Platinum-based Chemotherapy for the First-line Treatment of Patients with Metastatic Squamous Non-small Cell Lung Cancer Whose Tumors Express PD-L1 (ARETMIDE-Lung-02)",
     protocol: "D702BC00001",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT06692738",
   },
   {
-    id: "SPLFIO-174",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 1st line",
-    indication: "PD-L1 TPS ≥ 50%",
+    indicationGroup: "1st Line Metastatic",
+    indication: "TPS ≥ 50%",
+    id: "SPLFIO-174",
+    nct: "NCT06162572",
     title:
-      "Platform immunotherapy combinations in untreated advanced NSCLC with high PD-L1 expression",
+      "A Phase 1b/2, multicenter, open-label platform study of select immunotherapy combinations in adult participants with previously untreated advanced non-small cell lung cancer (NSCLC) with high PD-L1 expression",
     protocol: "SPLFIO-174",
     status: "Suspended",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT06162572",
   },
   {
-    id: "SMT112-3007 (HARMONi-7)",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 1st line",
-    indication: "PD-L1 TPS ≥ 50%",
+    indicationGroup: "1st Line Metastatic",
+    indication: "TPS ≥ 50%",
+    id: "SMT112-3007/ HARMONi-7",
+    nct: "NCT06767514",
     title:
-      "Ivonescimab vs pembrolizumab in 1L metastatic NSCLC with high PD-L1 (TPS ≥ 50%)",
-    protocol: "SMT112-3007",
+      "A Randomized, Double-blinded, Multiregional Phase 3 Study of Ivonescimab Versus Pembrolizumab for the First-line Treatment of Metastatic Non-small Cell Lung Cancer in Patients Whose Tumors Demonstrate High PD-L1 Expression (TPS ≥ 50%)",
+    protocol: "SMT112-3007/ HARMONi-7",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT06767514",
   },
   {
-    id: "SMT112-3003 (HARMONi-3)",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 1st line",
-    indication: "Adeno and squamous",
+    indicationGroup: "1st Line Metastatic",
+    indication: "Adeno and Squamous",
+    id: "SMT112-3003/ HARMONi-3",
+    nct: "NCT05899608",
     title:
-      "Ivonescimab + chemotherapy vs pembrolizumab + chemotherapy in 1L metastatic squamous NSCLC",
-    protocol: "SMT112-3003",
+      "A Randomized, Double-blind, Multiregional Phase 3 Study of Ivonescimab Combined with Chemotherapy Versus Pembrolizumab Combined with Chemotherapy for the First-line Treatment of Metastatic Squamous Nonsmall Cell Lung Cancer (HARMONi-3)",
+    protocol: "SMT112-3003/ HARMONi-3",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT05899608",
   },
   {
-    id: "S1900J",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 2nd line+",
+    indicationGroup: "2nd Line and Beyond",
     indication: "MET amplification",
+    id: "S1900J",
+    nct: "NCT06116682",
     title:
-      "Amivantamab SC in MET amplification-positive stage IV/recurrent NSCLC (Lung-MAP sub-study)",
+      "A Phase II Study of Amivantamab SC (subcutaneous) in Participants with MET Amplification-Positive Stage IV or Recurrent Non-Small Cell Lung Cancer (Lung-MAP Sub-Study).",
     protocol: "S1900J",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT06116682",
   },
   {
-    id: "BNT326-02",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 2nd line+",
+    indicationGroup: "2nd Line and Beyond",
     indication: "No driver mutation",
-    title: "BNT326 + BNT327 dose finding in advanced NSCLC",
+    id: "BNT326-02",
+    nct: "NCT07111520",
+    title:
+      "A Phase Ib/II, multi-site, open-label, dose finding trial to evaluate the safety, efficacy, and pharmacokinetics of BNT326 in combination with BNT327 in participants with advanced non-small cell lung cancer (NSCLC)",
     protocol: "BNT326-02",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT07111520",
   },
   {
-    id: "NVL-655-EAP",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 2nd line+",
+    indicationGroup: "2nd Line and Beyond",
     indication: "Advanced ALK",
-    title: "Expanded access of Neladalkib (NVL-655) in advanced ALK+ NSCLC",
+    id: "NVL-655-EAP",
+    nct: "NCT06834074",
+    title:
+      "Expanded Access Treatment of Neladalkib (NVL-655) in Patients with Advanced ALK + NSCLC",
     protocol: "NVL-655-EAP",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT06834074",
   },
   {
-    id: "RMC-6236-301 (RASolve 301)",
     dst: "TOC",
     disease: "NSCLC",
-    indicationGroup: "Metastatic 2nd line+",
+    indicationGroup: "2nd Line and Beyond",
     indication: "RAS[MUT]",
-    title: "RMC-6236 vs docetaxel in previously treated RAS-mutated NSCLC",
+    id: "RMC-6236-301",
+    nct: "NCT06881784",
+    title:
+      "A Phase 3 Multicenter, Open Label, Randomized Study of RMC-6236 versus Docetaxel in Patients with Previously Treated Locally Advanced or Metastatic RAS[MUT] NSCLC  (RASolve 301)",
     protocol: "RMC-6236-301",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT06881784",
   },
-
-  // SCLC
   {
-    id: "HFH-C-2025-02",
     dst: "TOC",
     disease: "SCLC",
-    indicationGroup: "Metastatic 1st line",
-    indication: "Extensive stage",
+    indicationGroup: "1st Line Metastatic",
+    id: "HFH-C-2025-02",
+    nct: "NCT07339059",
     title:
-      "Sacituzumab govitecan with atezolizumab/durvalumab as maintenance therapy for extensive stage SCLC",
+      "A Phase II study of Sacituzumab govitecan with Atezolizumab/Durvalumab as maintenance therapy for Extensive stage small cell lung cancer",
     protocol: "HFH-C-2025-02",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT07339059",
   },
   {
-    id: "PUMA-ALI-4201",
     dst: "TOC",
     disease: "SCLC",
-    indicationGroup: "Metastatic 2nd line+",
-    indication: "Extensive stage",
+    indicationGroup: "2nd Line and Beyond",
+    indication: "No driver mutation",
+    id: "PUMA-ALI-4201",
+    nct: "NCT06095505",
     title:
       "A Phase 2 Study Of Alisertib In Patients With Extensive Stage Small Cell Lung Cancer",
     protocol: "PUMA-ALI-4201",
     status: "Open",
-    lastUpdated: "2026-02-13",
+    link: "https://clinicaltrials.gov/study/NCT06095505",
   },
 
   // =====================
   // Neuro/Brain (NB)
   // =====================
   {
-    id: "NRG-BN013",
-    dst: "NB",
-    disease: "Radiation trials",
-    indicationGroup: "Brain metastases",
-    indication: "Brain metastases",
-    title: "Single fraction SRS vs fractionated SRS for intact brain metastases",
-    protocol: "NRG-BN013",
-    status: "Open to Accrual",
-    notes: "Feasible at satellite locations",
-    lastUpdated: "2026-02-13",
-  },
-  {
-    id: "NRG-BN003",
-    dst: "NB",
-    disease: "Radiation trials",
-    indicationGroup: "Meningioma",
-    indication: "Meningioma",
-    title: "Observation vs irradiation for gross totally resected grade II meningioma",
-    protocol: "NRG-BN003",
-    status: "Open to Accrual",
-    notes: "Feasible at satellite locations",
-    lastUpdated: "2026-02-13",
-  },
-  {
-    id: "A071401",
-    dst: "NB",
-    disease: "Therapeutic trials",
-    indicationGroup: "Meningioma",
-    indication: "Meningioma",
+    dst: "NEURO",
+    disease: "Neuro/Brain",
+    indicationGroup: "Radiation trials",
+    indication: "SRS vs FSRS for Intact Brain Metastases",
+    id: "NRG-BN013*",
+    nct: "NCT06500455",
     title:
-      "SMO/AKT/NF2/CDK inhibitors in progressive meningiomas with pathway mutations",
-    protocol: "A071401",
-    status: "Open to Accrual",
-    notes: "Feasible at satellite locations",
-    lastUpdated: "2026-02-13",
+      "(Dr. Walker): Phase III Trial of Single Fraction Stereotactic Radiosurgery (SRS) Versus Fractionated SRS (FSRS) for Intact Brain Metastases",
+    protocol: "NRG-BN013*",
+    status: "Open",
+    link: "https://clinicaltrials.gov/study/NCT06500455",
   },
   {
-    id: "AB-218-G203",
-    dst: "NB",
-    disease: "Therapeutic trials",
-    indicationGroup: "Glioma",
-    indication: "IDH1-mutant glioma",
-    title: "Safusidenib erbumine in IDH1-mutant glioma",
-    protocol: "AB-218-G203",
-    status: "Open to Accrual",
-    notes: "IDH1 mutation (R132H/C/G/S/L)",
-    lastUpdated: "2026-02-13",
+    dst: "NEURO",
+    disease: "Neuro/Brain",
+    indicationGroup: "Radiation trials",
+    indication: "Observation vs Irradiation - Gross Totally Resected Grade II Meningioma",
+    id: "NRG-BN003*",
+    nct: "NCT03180268",
+    title:
+      "(Dr. Walker): Phase III Trial of Observation Versus Irradiation for a Gross Totally Resected Grade II Meningioma",
+    protocol: "NRG-BN003*",
+    status: "Open",
+    link: "https://clinicaltrials.gov/study/NCT03180268",
   },
   {
-    id: "A072201",
-    dst: "NB",
-    disease: "Therapeutic trials",
-    indicationGroup: "Glioblastoma",
-    indication: "Recurrent glioblastoma",
-    title: "Anti-LAG-3 and anti-PD-1 blockade vs SOC in recurrent glioblastoma",
-    protocol: "A072201",
-    status: "Open to Accrual",
-    notes: "(Dr. Walbert)",
-    lastUpdated: "2026-02-13",
+    dst: "NEURO",
+    disease: "Neuro/Brain",
+    indicationGroup: "Therapeutic trials",
+    indication: "Glioblastoma",
+    id: "NRG-BN011",
+    nct: "NCT05600090",
+    title:
+      "A Phase II/III Trial of Lomustine-Temozolomide Combination Therapy Versus Standard Temozolomide Therapy in Patients With Newly Diagnosed MGMT Promoter Methylated Glioblastoma",
+    protocol: "NRG-BN011",
+    status: "Open",
+    link: "https://clinicaltrials.gov/study/NCT05600090",
+  },
+  {
+    dst: "NEURO",
+    disease: "Neuro/Brain",
+    indicationGroup: "Therapeutic trials",
+    indication: "Recurrent Glioblastoma",
+    id: "NRG-BN007",
+    nct: "NCT03430791",
+    title:
+      "Phase II Trial of Ipilimumab and Nivolumab Compared With Nivolumab Alone in Patients With Recurrent Glioblastoma",
+    protocol: "NRG-BN007",
+    status: "Open",
+    link: "https://clinicaltrials.gov/study/NCT03430791",
+  },
+  {
+    dst: "NEURO",
+    disease: "Neuro/Brain",
+    indicationGroup: "Therapeutic trials",
+    indication: "Melanoma Brain Mets",
+    id: "MDACC 2018-0440",
+    nct: "NCT03898908",
+    title:
+      "A Phase II Trial of ATRC-101 and Pembrolizumab in Patients With Advanced Solid Tumors (Includes melanoma with brain metastases cohort)",
+    protocol: "MDACC 2018-0440",
+    status: "Open",
+    link: "https://clinicaltrials.gov/study/NCT03898908",
   },
 
   // =====================
@@ -735,53 +762,115 @@ const SAMPLE_TRIALS = [
     notes: "Feasible at satellite locations",
     lastUpdated: "2026-02-13",
   },
+  // =====================
+// Sarcoma (SAR)
+// =====================
+{
+  id: "EA7222",
+  nct: "NCT06422806",
+  dst: "SAR",
+  disease: "Sarcoma",
+  indicationGroup: "UPS / Poorly differentiated sarcomas",
+  title:
+    "EA7222: Doxorubicin + Pembrolizumab vs Doxorubicin alone for UPS and related poorly differentiated sarcomas",
+  protocol: "EA7222",
+  status: "Open to Accrual",
+  lastUpdated: "2026-02-25",
+},
+{
+  id: "AOST2032",
+  nct: "NCT05691478",
+  dst: "SAR",
+  disease: "Sarcoma",
+  indicationGroup: "Newly Diagnosed Osteosarcoma",
+  title:
+    "AOST2032: Cabozantinib + chemotherapy for newly diagnosed osteosarcoma",
+  protocol: "AOST2032",
+  status: "Open to Accrual",
+  lastUpdated: "2026-02-25",
+},
+
+// =====================
+// Melanoma (MEL)
+// =====================
+{
+  id: "IOV-MEL-301",
+  nct: "NCT05727904",
+  dst: "MEL",
+  disease: "Melanoma",
+  indicationGroup: "Metastatic • First Line",
+  title:
+    "IOV-MEL-301: lifileucel (TIL) + pembrolizumab vs pembrolizumab in previously untreated unresectable/metastatic melanoma",
+  protocol: "IOV-MEL-301",
+  status: "Open to Accrual",
+  lastUpdated: "2026-02-25",
+},
+{
+  id: "IMC-F106C-301",
+  nct: "NCT06112314",
+  dst: "MEL",
+  disease: "Melanoma",
+  indicationGroup: "Advanced • 1L",
+  title:
+    "IMC-F106C + nivolumab vs nivolumab regimens in HLA-A*02:01+ advanced melanoma (PRISM-MEL-301)",
+  protocol: "IMC-F106C-301",
+  status: "Open to Accrual",
+  lastUpdated: "2026-02-25",
+},
+{
+  id: "RP1-104",
+  nct: "NCT06264180",
+  dst: "MEL",
+  disease: "Melanoma",
+  indicationGroup: "Advanced • Post PD-1/CTLA-4",
+  title:
+    "RP1-104: vusolimogene oderparepvec + nivolumab vs physician’s choice in advanced melanoma after anti-PD-1 and anti-CTLA-4 (IGNYTE-3)",
+  protocol: "RP1-104",
+  status: "Open to Accrual",
+  lastUpdated: "2026-02-25",
+},
+{
+  id: "R3767-onc-22122",
+  nct: "NCT06246916",
+  dst: "MEL",
+  disease: "Melanoma",
+  indicationGroup: "Unresectable/Metastatic",
+  title:
+    "R3767-onc-22122: fianlimab+c emiplimab vs nivolumab+relatlimab in unresectable or metastatic melanoma",
+  protocol: "R3767-onc-22122",
+  status: "Open to Accrual",
+  lastUpdated: "2026-02-25",
+},
+{
+  id: "SN2426/HN013",
+  nct: "NCT07042295",
+  dst: "MEL",
+  disease: "Melanoma",
+  indicationGroup: "Cutaneous SCC (listed under MEL in your file)",
+  title:
+    "SN2426/HN013: amivantamab + hyaluronidase vs cetuximab in immunocompromised recurrent inoperable/metastatic cutaneous SCC",
+  protocol: "SN2426/HN013",
+  status: "Open to Accrual",
+  lastUpdated: "2026-02-25",
+},
+{
+  id: "R3767-ONC-2466",
+  nct: "NCT06848088",
+  dst: "MEL",
+  disease: "Melanoma",
+  indicationGroup: "Extended follow-up",
+  title:
+    "R3767-ONC-2466: extended follow-up of melanoma patients treated with fianlimab + cemiplimab",
+  protocol: "R3767-ONC-2466",
+  status: "Open to Accrual",
+  lastUpdated: "2026-02-25",
+},
 ];
 
 function toSiteLabel(siteId) {
   return DISEASE_SITES.find((s) => s.id === siteId)?.label ?? siteId;
 }
 
-function safe(s) {
-  return (s ?? "").toString();
-}
-
-function normalize(s) {
-  return safe(s).trim().toLowerCase();
-}
-
-function matchesTrial(trial, q) {
-  const haystack = [
-    trial.id,
-    trial.nct,
-    trial.title,
-    trial.protocol,
-    trial.pi,
-    trial.sponsor,
-    trial.status,
-    trial.phase,
-    trial.population,
-    trial.dst,
-    trial.disease,
-    trial.indicationGroup,
-    trial.indication,
-    trial.notes,
-    ...(trial.keywords ?? []),
-  ]
-    .filter(Boolean)
-    .map(normalize)
-    .join(" ");
-  return haystack.includes(normalize(q));
-}
-
-function groupBy(arr, keyFn) {
-  const m = new Map();
-  for (const item of arr) {
-    const k = keyFn(item) ?? "Unspecified";
-    if (!m.has(k)) m.set(k, []);
-    m.get(k).push(item);
-  }
-  return m;
-}
 
 function PillSelect({ label, value, options, onChange, icon: Icon }) {
   const [open, setOpen] = useState(false);
@@ -856,8 +945,8 @@ function Modal({ open, onClose, title, children }) {
             exit={{ y: 24, opacity: 0, scale: 0.98 }}
             className="relative w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl bg-white shadow-xl border border-slate-200"
           >
-            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100">
-              <div className="text-base font-semibold text-slate-900">
+<div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100 bg-white">
+                <div className="text-base font-semibold text-slate-900">
                 {title}
               </div>
               <Button variant="ghost" onClick={onClose}>
@@ -865,17 +954,71 @@ function Modal({ open, onClose, title, children }) {
                 Close
               </Button>
             </div>
-            <div className="p-5">{children}</div>
+            <div className="p-5 max-h-[75vh] overflow-y-auto">
+  {children}
+</div>
           </motion.div>
         </motion.div>
       ) : null}
     </AnimatePresence>
   );
 }
+function CollapsibleSection({ title, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
 
-function TrialDetail({ trial }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-3"
+      >
+        <div className="text-sm font-semibold text-slate-900">{title}</div>
+        <ChevronDown
+          className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open ? (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4">{children}</div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
+function TrialDetail({ trial, ct, loading, error }) {
   return (
     <div className="space-y-3">
+          {(() => {
+      const s = dstStyle(trial.dst);
+      return (
+        <div className={`rounded-2xl bg-gradient-to-r ${s.banner} p-[1px]`}>
+          <div className="rounded-2xl bg-white/70 backdrop-blur px-4 py-3 flex items-center justify-between">
+            <div>
+              <div className="text-xs text-slate-500">Disease Site Team</div>
+              <div className="text-sm font-semibold text-slate-900">
+                {s.label} ({trial.dst})
+              </div>
+            </div>
+            <span className={`text-xs px-2 py-1 rounded-full border ${s.chip}`}>
+              {trial.status || "—"}
+            </span>
+          </div>
+        </div>
+      );
+    })()}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-semibold text-slate-500">
           {trial.id}
@@ -952,10 +1095,77 @@ function TrialDetail({ trial }) {
           </Button>
         </div>
       ) : null}
+
+{/* --- ClinicalTrials.gov Enriched Details --- */}
+{trial?.nct ? (
+  <div className="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-white/70 p-4">
+    {loading ? (
+      <div className="text-sm text-slate-700">
+        Loading ClinicalTrials.gov details…
+      </div>
+    ) : null}
+
+    {error ? (
+      <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+        {error}
+      </div>
+    ) : null}
+
+    {ct ? (
+      <>
+        <div className="text-sm text-slate-700">
+          <span className="font-semibold text-slate-900">Official title:</span>{" "}
+          {ct.officialTitle || "—"}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="rounded-xl border border-slate-200 bg-white/60 p-3 text-sm">
+            <div className="text-xs font-semibold text-slate-500">Phase</div>
+            <div className="mt-1 text-slate-900">{ct.phase || "—"}</div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white/60 p-3 text-sm">
+            <div className="text-xs font-semibold text-slate-500">Sponsor</div>
+            <div className="mt-1 text-slate-900">{ct.sponsor || "—"}</div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white/60 p-3 text-sm">
+            <div className="text-xs font-semibold text-slate-500">Status</div>
+            <div className="mt-1 text-slate-900">{ct.overallStatus || "—"}</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <CollapsibleSection title="Inclusion criteria" defaultOpen={false}>
+            <ul className="mt-1 list-disc pl-5 text-sm text-slate-800 space-y-1 max-h-64 overflow-y-auto pr-2">
+              {(ct?.inclusionCriteria || []).length
+                ? ct.inclusionCriteria.map((x, i) => (
+                    <li key={`inc-${i}`}>{x}</li>
+                  ))
+                : <li>—</li>}
+            </ul>
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Exclusion criteria" defaultOpen={false}>
+            <ul className="mt-1 list-disc pl-5 text-sm text-slate-800 space-y-1 max-h-64 overflow-y-auto pr-2">
+              {(ct?.exclusionCriteria || []).length
+                ? ct.exclusionCriteria.map((x, i) => (
+                    <li key={`exc-${i}`}>{x}</li>
+                  ))
+                : <li>—</li>}
+            </ul>
+          </CollapsibleSection>
+        </div>
+      </>
+    ) : null}
+  </div>
+) : (
+  <div className="mt-4 rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-700">
+    NCT number not provided for this trial yet — add it to enable overview,
+    protocol title, sponsor, phase, and inclusion/exclusion.
+  </div>
+)}
     </div>
   );
 }
-
 function TrialRow({ trial, onOpen }) {
   // Compact list row: show Trial ID + (optional) indication badge.
   return (
@@ -980,14 +1190,14 @@ function TrialRow({ trial, onOpen }) {
   );
 }
 
-function TrialDetailModal({ open, onClose, trial }) {
+function TrialDetailModal({ open, onClose, trial, ct, loading, error }) {
   return (
     <Modal
       open={open}
       onClose={onClose}
       title={trial ? `Trial Details • ${trial.id}` : "Trial Details"}
     >
-      {trial ? <TrialDetail trial={trial} /> : null}
+      {trial ? <TrialDetail trial={trial} ct={ct} loading={loading} error={error} /> : null}
     </Modal>
   );
 }
@@ -1061,10 +1271,86 @@ function AccordionDisease({ bucket, onOpenTrial }) {
     </Card>
   );
 }
+async function fetchCtGovStudy(nct) {
+  const url = `https://clinicaltrials.gov/api/v2/studies/${encodeURIComponent(nct)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`ClinicalTrials.gov fetch failed (${res.status})`);
+  return res.json();
+}
 
+function splitEligibilityToBullets(raw) {
+  if (!raw || typeof raw !== "string") return { inclusion: [], exclusion: [], raw: "" };
+
+  const text = raw.replace(/\r\n/g, "\n").trim();
+
+  // Split on "Exclusion Criteria:" if present
+  let inclusionBlock = text;
+  let exclusionBlock = "";
+
+  const parts = text.split(/exclusion\s*criteria\s*:/i);
+  if (parts.length > 1) {
+    inclusionBlock = parts[0];
+    exclusionBlock = parts.slice(1).join("\n").trim();
+  }
+
+  inclusionBlock = inclusionBlock.replace(/inclusion\s*criteria\s*:/i, "").trim();
+
+  const toBullets = (block) =>
+    block
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => l.replace(/^[-•*\d.()]+\s*/, "")) // strip bullets/numbering
+      .filter(Boolean);
+
+  return {
+    inclusion: toBullets(inclusionBlock),
+    exclusion: toBullets(exclusionBlock),
+    raw: text,
+  };
+}
+
+function mapCtGov(studyJson) {
+  const ps = studyJson?.protocolSection || {};
+  const idMod = ps?.identificationModule || {};
+  const sponsorMod = ps?.sponsorCollaboratorsModule || {};
+  const descMod = ps?.descriptionModule || {};
+  const designMod = ps?.designModule || {};
+  const eligMod = ps?.eligibilityModule || {};
+  const contactsMod = ps?.contactsLocationsModule || {};
+
+  const eligibilityText = eligMod?.eligibilityCriteria || "";
+  const { inclusion, exclusion } = splitEligibilityToBullets(eligibilityText);
+
+  const overallOfficials = contactsMod?.overallOfficials || [];
+  const overallOfficial = overallOfficials?.[0];
+
+  return {
+    protocolTitle: idMod?.officialTitle || idMod?.briefTitle || "",
+    nct: idMod?.nctId || "",
+    sponsor: sponsorMod?.leadSponsor?.name || "",
+    phase: Array.isArray(designMod?.phases) ? designMod.phases.join(", ") : (designMod?.phase || ""),
+    overview: descMod?.briefSummary || "",
+    principalInvestigator:
+      overallOfficial?.name
+        ? `${overallOfficial.name}${overallOfficial?.role ? ` (${overallOfficial.role})` : ""}`
+        : "",
+    inclusionCriteria: inclusion,
+    exclusionCriteria: exclusion,
+  };
+}
 export default function App() {
-  const [trials, setTrials] = useState(SAMPLE_TRIALS);
+  // ✅ state first
+  const [trials, setTrials] = useState(() => normalizeTrials(TRIALS_RAW));
+  const [ctDetailsByNct, setCtDetailsByNct] = useState({});
+  const [ctLoadingNct, setCtLoadingNct] = useState(null);
+  const [ctError, setCtError] = useState(null);
 
+  // ✅ then memos that depend on trials
+  const activeSites = useMemo(() => {
+    const present = new Set(trials.map((t) => t.dst));
+    return DISEASE_SITES.filter((s) => present.has(s.id));
+  }, [trials]);
   // Primary navigation
   const [dst, setDst] = useState("GU");
 
@@ -1102,7 +1388,7 @@ export default function App() {
   }, [dstTrials, disease, status, query]);
 
   const counts = useMemo(() => {
-    const byDst = Object.fromEntries(DISEASE_SITES.map((s) => [s.id, 0]));
+    const byDst = Object.fromEntries(trials.map((s) => [s.id, 0]));
     for (const t of trials) byDst[t.dst] = (byDst[t.dst] ?? 0) + 1;
 
     const byDisease = Object.fromEntries(diseaseOptions.map((d) => [d, 0]));
@@ -1135,13 +1421,32 @@ export default function App() {
     });
   }, [filtered]);
 
-  const openTrial = (trial) => {
-    setSelectedTrial(trial);
-    setIsDetailOpen(true);
-  };
+  const openTrial = async (trial) => {
+  setSelectedTrial(trial);
+  setIsDetailOpen(true);
+
+  if (!trial?.nct) return;
+  if (ctDetailsByNct[trial.nct]) return;
+
+  try {
+    setCtError(null);
+    setCtLoadingNct(trial.nct);
+    const json = await fetchCtGovStudy(trial.nct);
+    const mapped = mapCtGov(json);
+    setCtDetailsByNct((prev) => ({ ...prev, [trial.nct]: mapped }));
+  } catch (e) {
+    setCtError(String(e?.message || e));
+  } finally {
+    setCtLoadingNct(null);
+  }
+};
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-white to-slate-100">
+<div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+  <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.10),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(16,185,129,0.10),transparent_55%)]" />
+  <div className="relative">
+    {/* your existing content */}
+  </div>
       <div className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -1341,8 +1646,16 @@ export default function App() {
         onAdd={(newTrial) => setTrials((prev) => [newTrial, ...prev])}
       />
 
-      <TrialDetailModal open={isDetailOpen} onClose={() => setIsDetailOpen(false)} trial={selectedTrial} />
-    </div>
+<TrialDetailModal
+  open={isDetailOpen}
+  onClose={() => setIsDetailOpen(false)}
+  trial={selectedTrial}
+  ct={selectedTrial?.nct ? ctDetailsByNct[selectedTrial.nct] : null}
+  loading={selectedTrial?.nct ? ctLoadingNct === selectedTrial.nct : false}
+  error={ctError}
+/>
+
+</div>
   );
 }
 
@@ -1540,5 +1853,4 @@ function AddTrialModal({ open, onClose, onAdd }) {
     </Modal>
   );
 }
-
 
