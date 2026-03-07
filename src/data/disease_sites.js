@@ -5,4 +5,7 @@ export const DISEASE_SITES = [
   { id: "NEURO", label: "Neuro/Brain" },
   { id: "SAR", label: "Sarcoma" },
   { id: "MEL", label: "Melanoma" },
+  { id: "GI", label: "Gastrointestinal (GI)" },
+  { id: "HEME", label: "Hematologic Malignancies" },
+  { id: "BREAST", label: "Breast Cancer" }
 ];
