@@ -1820,19 +1820,6 @@
   },
   {
     "dst": "HEME",
-    "disease": "Unprovoked DVT/ PE/ VTE",
-    "indicationGroup": "Unprovoked DVT/ PE/ VTE",
-    "indication": "Unprovoked DVT/ PE/ VTE",
-    "id": "CTHR24-001",
-    "nct": "Not in OnCore",
-    "title": "CTHR24-001: Thrombophilia GEnetic STudy in the USA: Thrombophilia occurrence study in patients admitted to a thrombosis clinic.",
-    "protocol": "CTHR24-001: Thrombophilia GEnetic STudy in the USA: Thrombophilia occurrence study in patients admitted to a thrombosis clinic.",
-    "status": "Open to Accrual",
-    "lastUpdated": "2026-03-07",
-    "keywords": []
-  },
-  {
-    "dst": "HEME",
     "disease": "wAIHA",
     "indicationGroup": "wAIHA",
     "indication": "warm autoimmune hemolytic anemia (wAIHA)",
