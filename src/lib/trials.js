@@ -14,7 +14,6 @@ export function matchesTrial(trial, q) {
     trial.nct,
     trial.title,
     trial.protocol,
-    trial.pi,
     trial.sponsor,
     trial.status,
     trial.phase,

@@ -73,44 +73,51 @@ export default function App() {
       : DISEASE_SITES.find((s) => s.id === selectedDst)?.label || selectedDst;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f8fafc",
-        color: "#0f172a",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: 24 }}>
-        <header style={{ marginBottom: 24 }}>
-          <h1 style={{ margin: 0, fontSize: 32 }}>CCTRO Trials App</h1>
-          <p style={{ marginTop: 8, color: "#475569" }}>
-            Browse active clinical trials by disease site, indication, and quick patient screen.
-          </p>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <header className="mb-8 overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-8 text-white shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="mb-3 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide text-slate-100">
+                Henry Ford Health • CCTRO
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Clinical Trials Navigator
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm text-slate-200 sm:text-base">
+                Identify potential clinical trials by disease site, biomarkers,
+                treatment history, and eligibility criteria with a clean,
+                physician-friendly workflow.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <HeroStat label="Trials Loaded" value={trials.length} />
+              <HeroStat label="Quick Matches" value={screenedTrials.length} />
+              <HeroStat label="Viewing" value={fullyFilteredTrials.length} />
+              <HeroStat label="Site Filter" value={selectedDst === "ALL" ? "All" : selectedDst} />
+            </div>
+          </div>
         </header>
 
-        <section
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: 12,
-            padding: 16,
-            marginBottom: 20,
-          }}
-        >
-          <h2 style={{ marginTop: 0, marginBottom: 12 }}>Quick Patient Screen</h2>
+        <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Quick Patient Screen</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Narrow likely trials using diagnosis, biomarker, sex, age, and prior therapy.
+              </p>
+            </div>
+            <div className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+              {screenedTrials.length} potential matches
+            </div>
+          </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 12,
-            }}
-          >
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             <select
               value={screening.dst}
               onChange={(e) => setScreening({ ...screening, dst: e.target.value })}
-              style={inputStyle}
+              className={inputClass}
             >
               <option value="">All Disease Sites</option>
               {DISEASE_SITES.map((site) => (
@@ -125,7 +132,7 @@ export default function App() {
               placeholder="Diagnosis (e.g. gastric cancer)"
               value={screening.diagnosis}
               onChange={(e) => setScreening({ ...screening, diagnosis: e.target.value })}
-              style={inputStyle}
+              className={inputClass}
             />
 
             <input
@@ -133,13 +140,13 @@ export default function App() {
               placeholder="Age"
               value={screening.age}
               onChange={(e) => setScreening({ ...screening, age: e.target.value })}
-              style={inputStyle}
+              className={inputClass}
             />
 
             <select
               value={screening.sex}
               onChange={(e) => setScreening({ ...screening, sex: e.target.value })}
-              style={inputStyle}
+              className={inputClass}
             >
               <option value="">Any Sex</option>
               <option value="MALE">Male</option>
@@ -151,7 +158,7 @@ export default function App() {
               placeholder="Biomarker / mutation (e.g. HER2, Claudin18.2)"
               value={screening.biomarker}
               onChange={(e) => setScreening({ ...screening, biomarker: e.target.value })}
-              style={inputStyle}
+              className={inputClass}
             />
 
             <input
@@ -159,11 +166,11 @@ export default function App() {
               placeholder="Prior therapy / line (e.g. first-line, prior platinum)"
               value={screening.priorTherapy}
               onChange={(e) => setScreening({ ...screening, priorTherapy: e.target.value })}
-              style={inputStyle}
+              className={inputClass}
             />
           </div>
 
-          <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             <button
               onClick={() =>
                 setScreening({
@@ -175,144 +182,117 @@ export default function App() {
                   priorTherapy: "",
                 })
               }
-              style={buttonStyle(false)}
+              className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Clear Quick Screen
             </button>
 
-            <div style={{ alignSelf: "center", fontSize: 14, color: "#475569" }}>
-              Matching trials: <strong>{screenedTrials.length}</strong>
+            <div className="text-sm text-slate-500">
+              Current screen:
+              <span className="ml-2 font-medium text-slate-800">
+                {screening.dst ||
+                screening.diagnosis ||
+                screening.age ||
+                screening.sex ||
+                screening.biomarker ||
+                screening.priorTherapy
+                  ? "Active"
+                  : "None"}
+              </span>
             </div>
           </div>
         </section>
 
-        <section
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: 12,
-            padding: 16,
-            marginBottom: 20,
-          }}
-        >
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
-            <button
-              onClick={() => setSelectedDst("ALL")}
-              style={buttonStyle(selectedDst === "ALL")}
-            >
-              All CCTRO Trials
-            </button>
+        <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Trial Browser</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Filter by disease site and search across protocol details, NCT, sponsor, and status.
+              </p>
+            </div>
 
+            <div className="min-w-0 flex-1 xl:max-w-xl">
+              <input
+                type="text"
+                placeholder="Search by title, NCT, protocol, sponsor, status, disease..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="mb-4 flex flex-wrap gap-2">
+            <FilterChip
+              active={selectedDst === "ALL"}
+              onClick={() => setSelectedDst("ALL")}
+              label="All CCTRO Trials"
+            />
             {DISEASE_SITES.map((site) => (
-              <button
+              <FilterChip
                 key={site.id}
+                active={selectedDst === site.id}
                 onClick={() => setSelectedDst(site.id)}
-                style={buttonStyle(selectedDst === site.id)}
-              >
-                {site.label}
-              </button>
+                label={site.label}
+              />
             ))}
           </div>
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-            <input
-              type="text"
-              placeholder="Search by title, NCT, protocol, sponsor, status, disease..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                flex: "1 1 420px",
-                minWidth: 260,
-                padding: "12px 14px",
-                borderRadius: 10,
-                border: "1px solid #cbd5e1",
-                fontSize: 14,
-              }}
-            />
-
+          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
             <button
               onClick={() => setSearchQuery("")}
-              style={{
-                padding: "12px 16px",
-                borderRadius: 10,
-                border: "1px solid #cbd5e1",
-                background: "#fff",
-                cursor: "pointer",
-              }}
+              className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Clear Search
             </button>
+            <span>
+              Viewing <span className="font-semibold text-slate-800">{fullyFilteredTrials.length}</span>{" "}
+              trials in <span className="font-semibold text-slate-800">{selectedLabel}</span>
+            </span>
           </div>
         </section>
 
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 12,
-            marginBottom: 24,
-          }}
-        >
-          <StatCard label="All CCTRO trials (loaded)" value={trials.length} />
-          <StatCard label="Quick Screen matches" value={screenedTrials.length} />
-          <StatCard label="Currently viewing" value={fullyFilteredTrials.length} />
-          <StatCard label="Disease site" value={selectedLabel} />
+        <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard label="All Trials Loaded" value={trials.length} />
+          <StatCard label="Quick Screen Matches" value={screenedTrials.length} />
+          <StatCard label="Filtered Results" value={fullyFilteredTrials.length} />
+          <StatCard label="Active Disease Filter" value={selectedLabel} />
         </section>
 
         {fullyFilteredTrials.length === 0 ? (
-          <section
-            style={{
-              background: "#fff",
-              border: "1px solid #e2e8f0",
-              borderRadius: 12,
-              padding: 24,
-            }}
-          >
-            <h2 style={{ marginTop: 0 }}>No trials found</h2>
-            <p style={{ marginBottom: 0, color: "#475569" }}>
+          <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+            <h2 className="text-xl font-semibold text-slate-900">No trials found</h2>
+            <p className="mt-2 text-sm text-slate-500">
               Try clearing the quick screen, search box, or disease-site filter.
             </p>
           </section>
         ) : (
           groupedTrials.map((diseaseBlock) => (
-            <section key={diseaseBlock.disease} style={{ marginBottom: 28 }}>
-              <div
-                style={{
-                  background: "#0f172a",
-                  color: "#fff",
-                  padding: "12px 16px",
-                  borderRadius: 12,
-                  marginBottom: 12,
-                }}
-              >
-                <h2 style={{ margin: 0, fontSize: 22 }}>{diseaseBlock.disease}</h2>
+            <section key={diseaseBlock.disease} className="mb-8">
+              <div className="mb-4 rounded-2xl bg-slate-900 px-5 py-4 text-white shadow-sm">
+                <h2 className="text-xl font-semibold">{diseaseBlock.disease}</h2>
               </div>
 
               {diseaseBlock.groups.map(([indicationGroup, groupTrials]) => (
-                <div key={`${diseaseBlock.disease}-${indicationGroup}`} style={{ marginBottom: 18 }}>
-                  <h3
-                    style={{
-                      margin: "8px 0 12px 0",
-                      fontSize: 18,
-                      color: "#1e293b",
-                    }}
-                  >
-                    {indicationGroup} ({groupTrials.length})
-                  </h3>
+                <div key={`${diseaseBlock.disease}-${indicationGroup}`} className="mb-6">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h3 className="text-lg font-semibold text-slate-800">
+                      {indicationGroup}
+                    </h3>
+                    <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
+                      {groupTrials.length} trials
+                    </div>
+                  </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-                      gap: 14,
-                    }}
-                  >
+                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                     {groupTrials.map((trial) => (
                       <TrialCard
                         key={`${trial.id}-${trial.nct || trial.title}`}
                         trial={trial}
                         openTrial={openTrial}
                         setOpenTrial={setOpenTrial}
+                        screening={screening}
                       />
                     ))}
                   </div>
@@ -326,23 +306,41 @@ export default function App() {
   );
 }
 
-function StatCard({ label, value }) {
+function HeroStat({ label, value }) {
   return (
-    <div
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e2e8f0",
-        borderRadius: 12,
-        padding: 16,
-      }}
-    >
-      <div style={{ fontSize: 13, color: "#64748b", marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>
+    <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
+      <div className="text-xs uppercase tracking-wide text-slate-300">{label}</div>
+      <div className="mt-1 text-lg font-semibold text-white">{value}</div>
     </div>
   );
 }
 
-function TrialCard({ trial, openTrial, setOpenTrial }) {
+function StatCard({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="text-sm font-medium text-slate-500">{label}</div>
+      <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{value}</div>
+    </div>
+  );
+}
+
+function FilterChip({ active, onClick, label }) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        "rounded-full border px-4 py-2 text-sm font-medium transition",
+        active
+          ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+          : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50",
+      ].join(" ")}
+    >
+      {label}
+    </button>
+  );
+}
+
+function TrialCard({ trial, openTrial, setOpenTrial, screening }) {
   const trialKey = `${trial.id}-${trial.nct || trial.title}`;
   const isOpen = openTrial === trialKey;
 
@@ -360,7 +358,8 @@ function TrialCard({ trial, openTrial, setOpenTrial }) {
 
   const inclusionText = extractInclusion(eligibilityText);
   const exclusionText = extractExclusion(eligibilityText);
-
+  const matchReasons = getMatchReasons(trial, screening);
+  const drugBadges = extractDrugBadges(trial);
   const shortTitle = safe(trial.title).startsWith(`${safe(trial.id)}:`)
     ? safe(trial.title).replace(`${safe(trial.id)}:`, "").trim()
     : safe(trial.title).startsWith(`${safe(trial.id)} `)
@@ -368,50 +367,58 @@ function TrialCard({ trial, openTrial, setOpenTrial }) {
     : safe(trial.title);
 
   return (
-    <div
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e2e8f0",
-        borderRadius: 12,
-        padding: 16,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-      }}
-    >
-      <div
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+      <button
+        type="button"
         onClick={toggle}
-        style={{
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
+        className="flex w-full items-start gap-3 px-5 py-4 text-left"
       >
         <div
-          style={{
-            transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
-            transition: "transform 0.2s",
-            fontSize: 14,
-            color: "#475569",
-            minWidth: 14,
-          }}
+          className={[
+            "mt-1 shrink-0 text-xs text-slate-500 transition-transform",
+            isOpen ? "rotate-90" : "rotate-0",
+          ].join(" ")}
         >
           ▶
         </div>
 
-        <div>
-          <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>
-            {safe(trial.dst)} {trial.phase ? `• ${safe(trial.phase)}` : ""}
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-700">
+              {safe(trial.dst) || "Site"}
+            </span>
+            {trial.phase ? (
+              <span className="rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-700">
+                {safe(trial.phase)}
+              </span>
+            ) : null}
+            {trial.status ? (
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
+                {safe(trial.status)}
+              </span>
+            ) : null}
           </div>
-
-          <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.35, color: "#0f172a" }}>
+{drugBadges.length > 0 ? (
+  <div className="mt-2 flex flex-wrap gap-2">
+    {drugBadges.map((drug) => (
+      <span
+        key={drug}
+        className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700"
+      >
+        {drug}
+      </span>
+    ))}
+  </div>
+) : null}
+          <div className="text-lg font-semibold leading-6 text-slate-900">
             {safe(trial.id)}: {shortTitle}
           </div>
         </div>
-      </div>
+      </button>
 
       {isOpen && (
-        <div style={{ marginTop: 14 }}>
-          <div style={{ display: "grid", gap: 6, fontSize: 14 }}>
+        <div className="border-t border-slate-200 px-5 py-5">
+          <div className="grid grid-cols-1 gap-3 rounded-2xl bg-slate-50 p-4 text-sm sm:grid-cols-2">
             <InfoRow label="Protocol ID" value={safe(trial.id) || "—"} />
             <InfoRow label="NCT" value={safe(trial.nct) || "—"} />
             <InfoRow label="Disease Site" value={safe(trial.dst) || "—"} />
@@ -420,95 +427,92 @@ function TrialCard({ trial, openTrial, setOpenTrial }) {
             <InfoRow label="Indication" value={safe(trial.indication) || "—"} />
             <InfoRow label="Status" value={safe(trial.status) || "—"} />
             {trial.sponsor ? <InfoRow label="Sponsor" value={safe(trial.sponsor)} /> : null}
-            {trial.pi ? <InfoRow label="PI" value={safe(trial.pi)} /> : null}
-            {trial.lastUpdated ? (
-              <InfoRow label="Last Updated" value={safe(trial.lastUpdated)} />
-            ) : null}
+{trial.lastUpdated ? (
+  <InfoRow label="Last Updated" value={safe(trial.lastUpdated)} />
+) : null}
           </div>
 
-          {trial.protocol && trial.protocol !== trial.title ? (
-            <div style={{ marginTop: 12 }}>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#475569",
-                  marginBottom: 4,
-                }}
-              >
-                Full Protocol
+          {matchReasons.length > 0 ? (
+            <section className="mt-5">
+              <h4 className="mb-3 text-sm font-semibold text-slate-800">Why this matched</h4>
+              <div className="flex flex-wrap gap-2">
+                {matchReasons.map((reason, idx) => (
+                  <span
+                    key={`${reason}-${idx}`}
+                    className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-800"
+                  >
+                    {reason}
+                  </span>
+                ))}
               </div>
-              <div style={{ fontSize: 13, color: "#334155", lineHeight: 1.4 }}>
+            </section>
+          ) : null}
+{drugBadges.length > 0 ? (
+  <div className="mt-2 flex flex-wrap gap-2">
+    {drugBadges.map((drug) => (
+      <span
+        key={drug}
+        className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700"
+      >
+        {drug}
+      </span>
+    ))}
+  </div>
+) : null}
+          {trial.protocol && trial.protocol !== trial.title ? (
+            <section className="mt-5">
+              <h4 className="mb-2 text-sm font-semibold text-slate-800">Full Protocol</h4>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700">
                 {safe(trial.protocol)}
               </div>
-            </div>
+            </section>
           ) : null}
 
-          <div style={{ marginTop: 12 }}>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#475569",
-                marginBottom: 6,
-              }}
-            >
-              Eligibility Criteria
-            </div>
+          <section className="mt-5">
+            <h4 className="mb-3 text-sm font-semibold text-slate-800">Eligibility Criteria</h4>
 
-            <details style={criteriaBox}>
-              <summary style={criteriaTitle}>Inclusion Criteria</summary>
-              <div style={criteriaText}>
+            <details className="mb-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-slate-900">
+                Inclusion Criteria
+              </summary>
+              <div className="mt-3 max-h-64 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-slate-700">
                 {inclusionText || "Not available for this trial in the current data file."}
               </div>
             </details>
 
-            <details style={criteriaBox}>
-              <summary style={criteriaTitle}>Exclusion Criteria</summary>
-              <div style={criteriaText}>
+            <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-slate-900">
+                Exclusion Criteria
+              </summary>
+              <div className="mt-3 max-h-64 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-slate-700">
                 {exclusionText || "Not available for this trial in the current data file."}
               </div>
             </details>
-          </div>
+          </section>
 
           {Array.isArray(trial.keywords) && trial.keywords.length > 0 ? (
-            <div style={{ marginTop: 12 }}>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#475569",
-                  marginBottom: 6,
-                }}
-              >
-                Keywords
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {trial.keywords.slice(0, 8).map((kw, idx) => (
+            <section className="mt-5">
+              <h4 className="mb-3 text-sm font-semibold text-slate-800">Keywords</h4>
+              <div className="flex flex-wrap gap-2">
+                {trial.keywords.slice(0, 10).map((kw, idx) => (
                   <span
                     key={`${kw}-${idx}`}
-                    style={{
-                      fontSize: 12,
-                      background: "#e2e8f0",
-                      color: "#334155",
-                      padding: "4px 8px",
-                      borderRadius: 999,
-                    }}
+                    className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
                   >
                     {kw}
                   </span>
                 ))}
               </div>
-            </div>
+            </section>
           ) : null}
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+          <div className="mt-5 flex flex-wrap gap-3">
             {ctgovLink ? (
               <a
                 href={ctgovLink}
                 target="_blank"
                 rel="noreferrer"
-                style={linkButtonStyle("#0f172a", "#fff")}
+                className="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
               >
                 ClinicalTrials.gov
               </a>
@@ -522,8 +526,9 @@ function TrialCard({ trial, openTrial, setOpenTrial }) {
 
 function InfoRow({ label, value }) {
   return (
-    <div>
-      <strong>{label}:</strong> {value}
+    <div className="rounded-xl border border-white bg-white p-3 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="mt-1 text-sm font-medium text-slate-900">{value}</div>
     </div>
   );
 }
@@ -593,62 +598,136 @@ function sexMatches(trial, sex) {
   if (!allowed || allowed === "ALL") return true;
   return allowed === safe(sex).toUpperCase();
 }
+function extractDrugBadges(trial) {
+  const source = `${safe(trial.title)} ${safe(trial.protocol)}`.toLowerCase();
 
-function buttonStyle(active) {
-  return {
-    padding: "10px 14px",
-    borderRadius: 999,
-    border: active ? "1px solid #0f172a" : "1px solid #cbd5e1",
-    background: active ? "#0f172a" : "#ffffff",
-    color: active ? "#ffffff" : "#0f172a",
-    cursor: "pointer",
-    fontWeight: 600,
-  };
+  const drugDictionary = [
+    "pembrolizumab",
+    "nivolumab",
+    "durvalumab",
+    "atezolizumab",
+    "ipilimumab",
+    "cemiplimab",
+    "fianlimab",
+    "rilvegostomig",
+    "trastuzumab",
+    "trastuzumab deruxtecan",
+    "deruxtecan",
+    "enhertu",
+    "fluoropyrimidine",
+    "gemcitabine",
+    "cisplatin",
+    "oxaliplatin",
+    "irinotecan",
+    "folfiri",
+    "folfox",
+    "paclitaxel",
+    "docetaxel",
+    "carboplatin",
+    "bevacizumab",
+    "ramucirumab",
+    "panitumumab",
+    "cetuximab",
+    "sotorasib",
+    "inavolisib",
+    "giredestrant",
+    "fulvestrant",
+    "ribociclib",
+    "abemaciclib",
+    "alpelisib",
+    "elacestrant",
+    "gedatolisib",
+    "camizestrant",
+    "palazestrant",
+    "venetoclax",
+    "blinatumomab",
+    "letrozole",
+    "exemestane",
+    "goserelin",
+    "doxorubicin",
+    "capecitabine",
+  ];
+
+  const matches = drugDictionary.filter((drug) => source.includes(drug));
+
+  return [...new Set(matches)].slice(0, 4);
+}
+function getMatchReasons(trial, screening) {
+  const reasons = [];
+
+  const haystack = [
+    trial.title,
+    trial.protocol,
+    trial.disease,
+    trial.indicationGroup,
+    trial.indication,
+    ...(trial.keywords || []),
+    trial.eligibility?.eligibilityCriteria || "",
+    trial.eligibilityCriteria || "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (screening.dst && trial.dst === screening.dst) {
+    reasons.push(`Disease site matched: ${trial.dst}`);
+  }
+
+  if (screening.diagnosis) {
+    const diagnosisWords = screening.diagnosis
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    const matchedDiagnosisWords = diagnosisWords.filter((word) =>
+      haystack.includes(word)
+    );
+
+    if (matchedDiagnosisWords.length > 0) {
+      reasons.push(`Diagnosis matched: ${matchedDiagnosisWords.join(", ")}`);
+    }
+  }
+
+  if (screening.biomarker) {
+    const biomarkerWords = screening.biomarker
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    const matchedBiomarkerWords = biomarkerWords.filter((word) =>
+      haystack.includes(word)
+    );
+
+    if (matchedBiomarkerWords.length > 0) {
+      reasons.push(`Biomarker matched: ${matchedBiomarkerWords.join(", ")}`);
+    }
+  }
+
+  if (screening.priorTherapy) {
+    const therapyWords = screening.priorTherapy
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    const matchedTherapyWords = therapyWords.filter((word) =>
+      haystack.includes(word)
+    );
+
+    if (matchedTherapyWords.length > 0) {
+      reasons.push(`Prior therapy matched: ${matchedTherapyWords.join(", ")}`);
+    }
+  }
+
+  if (screening.age && ageMatches(trial, screening.age)) {
+    reasons.push(`Age appears compatible: ${screening.age}`);
+  }
+
+  if (screening.sex && sexMatches(trial, screening.sex)) {
+    reasons.push(`Sex appears compatible: ${screening.sex}`);
+  }
+
+  return reasons;
 }
 
-function linkButtonStyle(bg, color) {
-  return {
-    display: "inline-block",
-    textDecoration: "none",
-    background: bg,
-    color,
-    padding: "10px 12px",
-    borderRadius: 10,
-    fontSize: 13,
-    fontWeight: 600,
-  };
-}
-
-const inputStyle = {
-  padding: "12px 14px",
-  borderRadius: 10,
-  border: "1px solid #cbd5e1",
-  fontSize: 14,
-  width: "100%",
-  boxSizing: "border-box",
-};
-
-const criteriaBox = {
-  marginBottom: 10,
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  borderRadius: 10,
-  padding: 10,
-};
-
-const criteriaTitle = {
-  cursor: "pointer",
-  fontWeight: 700,
-  fontSize: 13,
-  color: "#0f172a",
-};
-
-const criteriaText = {
-  marginTop: 10,
-  fontSize: 13,
-  color: "#334155",
-  lineHeight: 1.5,
-  whiteSpace: "pre-wrap",
-  maxHeight: 220,
-  overflowY: "auto",
-};
+const inputClass =
+  "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
